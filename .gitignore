@@ -14,6 +14,8 @@ out/
 .env
 .env.local
 .env.*
+backend/.env
+backend/.env.*
 
 # Logs
 *.log
