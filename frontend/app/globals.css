@@ -1,0 +1,167 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ═══════════════════════════════════════════════════════════════
+   PAINTOAD AI — Design Token System
+   Brand: lavender-violet #7C6FCD (RGB 124 111 205)
+   ═══════════════════════════════════════════════════════════════ */
+
+@layer base {
+  /* ── LIGHT MODE ─────────────────────────────────────────────── */
+  :root {
+    /* Brand — lavender-violet */
+    --brand-50:  248 246 255;
+    --brand-100: 237 233 255;
+    --brand-200: 218 211 255;
+    --brand-300: 187 175 245;
+    --brand-400: 155 141 228;
+    --brand-500: 124 111 205;   /* primary CTA */
+    --brand-600: 100  89 172;
+    --brand-700:  76  67 138;
+
+    /* Surfaces */
+    --surface-bg:     248 248 251;   /* #F8F8FB — off-white canvas */
+    --surface-card:   255 255 255;   /* pure white cards */
+    --surface-subtle: 244 243 250;   /* tinted section bg */
+    --surface-border: 226 223 240;   /* subtle lavender-tinted border */
+
+    /* Text - Dark & crisp for max legibility */
+    --ink:       15  15  26;         /* #0F0F1A deep dark black/charcoal */
+    --ink-muted: 65  62  85;         /* #413E55 dark slate grey */
+    --ink-faint: 110 105 130;        /* #6E6982 medium dark grey */
+
+    /* Pain severity — RGB values */
+    --pain-high:      225  29  72;   /* #E11D48 vibrant coral/red */
+    --pain-high-bg:   255 241 242;   /* #FFF1F2 soft light pink */
+    --pain-medium:    217 119   6;   /* #D97706 amber */
+    --pain-medium-bg: 254 243 199;   /* #FEF3C7 soft yellow */
+    --pain-low:        16 185 129;   /* #10B981 emerald green */
+    --pain-low-bg:    209 250 229;   /* #D1FAE5 soft mint */
+  }
+
+  /* ── DARK MODE ──────────────────────────────────────────────── */
+  .dark {
+    /* Brand */
+    --brand-50:  248 246 255;
+    --brand-100: 40  36  72;
+    --brand-200: 58  52  100;
+    --brand-300: 130 120 210;
+    --brand-400: 160 148 230;
+    --brand-500: 175 162 240;
+    --brand-600: 200 190 255;
+    --brand-700: 220 215 255;
+
+    /* Surfaces */
+    --surface-bg:     20  18  36;    /* #14121E deep neutral-violet */
+    --surface-card:   28  26  46;    /* slightly lighter card */
+    --surface-subtle: 34  31  56;
+    --surface-border: 52  48  80;
+
+    /* Text */
+    --ink:       240 238 255;        /* bright white/violet */
+    --ink-muted: 185 178 220;        /* readable muted violet-white */
+    --ink-faint: 130 122 165;        /* readable faint */
+
+    /* Pain severity — RGB values for dark mode */
+    --pain-high:      251 113 133;
+    --pain-high-bg:    76   5  25;
+    --pain-medium:    251 191  36;
+    --pain-medium-bg:  69  26   3;
+    --pain-low:        52 211 153;
+    --pain-low-bg:      6  78  59;
+  }
+
+  /* ── BASE RESETS ─────────────────────────────────────────────── */
+  * {
+    @apply border-surface-border;
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-surface-bg text-ink font-sans;
+    min-height: 100dvh;
+  }
+
+  /* Focus ring — consistent brand color */
+  :focus-visible {
+    @apply outline-none ring-2 ring-brand-500 ring-offset-2 ring-offset-surface-bg;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   COMPONENT LAYER — reusable class utilities
+   ═══════════════════════════════════════════════════════════════ */
+@layer components {
+
+  /* ── Scrollbar ───────────────────────────────────────────────── */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(var(--surface-border)) transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+  .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-surface-border;
+  }
+
+  /* ── Glass effect (used in navbar) ──────────────────────────── */
+  .glass {
+    backdrop-filter: blur(12px) saturate(1.4);
+    -webkit-backdrop-filter: blur(12px) saturate(1.4);
+    @apply bg-surface-card/80 border border-surface-border;
+  }
+
+  /* ── Pain severity badges ────────────────────────────────────── */
+  .badge-high   { @apply bg-pain-high-bg text-pain-high border border-pain-high/20; }
+  .badge-medium { @apply bg-pain-medium-bg text-pain-medium border border-pain-medium/20; }
+  .badge-low    { @apply bg-pain-low-bg text-pain-low border border-pain-low/20; }
+
+  /* ── Motion & Micro-interaction Classes ────────────────────── */
+  .hover-lift {
+    transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.2s ease;
+    will-change: transform;
+  }
+  .hover-lift:hover {
+    transform: translateY(-6px) scale(1.018);
+    box-shadow: 0 16px 36px -6px rgba(124, 111, 205, 0.18), 0 4px 12px 0 rgba(0, 0, 0, 0.08);
+  }
+  .hover-lift:active {
+    transform: translateY(-2px) scale(0.985);
+  }
+
+  .button-motion {
+    transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.2s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.2s ease, border-color 0.2s ease;
+    will-change: transform;
+  }
+  .button-motion:hover {
+    transform: translateY(-2px) scale(1.04);
+    box-shadow: 0 6px 18px -2px rgba(124, 111, 205, 0.28);
+  }
+  .button-motion:active {
+    transform: translateY(0px) scale(0.96);
+  }
+
+  .animate-float {
+    animation: floatSlow 4s ease-in-out infinite;
+  }
+  .animate-page-entrance {
+    animation: pageEntrance 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+}
+
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes pageEntrance {
+  0% { opacity: 0; transform: translateY(18px); }
+  100% { opacity: 1; transform: translateY(0px); }
+}
