@@ -91,6 +91,16 @@ function Slider({ label, value, min, max, step = 1, onChange, format }: {
   );
 }
 
+import { AiLoadingState, AnimatedCounter } from "@/components/ui";
+
+const SIMULATION_STEPS = [
+  "Configuring audience parameters",
+  "Calculating CPM & CPC benchmarks",
+  "Predicting CTR trajectory",
+  "Calculating conversion revenue",
+  "Finalizing ROI model",
+];
+
 /* ── Result metric card ─────────────────────────────────────── */
 function ResultCard({ icon: Icon, label, value, sub, accent }: {
   icon: typeof BarChart2; label: string; value: string; sub: string;
@@ -102,13 +112,15 @@ function ResultCard({ icon: Icon, label, value, sub, accent }: {
     medium:"text-pain-medium bg-pain-medium-bg border-pain-medium/20",
   };
   return (
-    <Card className="flex flex-col gap-3 h-full">
+    <Card className="flex flex-col gap-3 h-full hover-lift">
       <div className={cn("h-9 w-9 rounded-xl flex items-center justify-center border", colors[accent])}>
         <Icon className="h-4.5 w-4.5" />
       </div>
       <div>
-        <p className="text-2xl font-black text-ink leading-none">{value}</p>
-        <p className="text-sm text-ink-muted mt-1">{label}</p>
+        <p className="text-2xl font-black text-ink leading-none">
+          <AnimatedCounter value={value} />
+        </p>
+        <p className="text-sm font-semibold text-ink-muted mt-1">{label}</p>
         <p className="text-xs text-ink-faint mt-0.5">{sub}</p>
       </div>
     </Card>
@@ -132,10 +144,19 @@ export default function SimulatorPage() {
     );
   };
 
+  const [simulationStep, setSimulationStep] = useState(0);
+
   const handleRun = async () => {
     setRunning(true);
     setResults(null);
-    await new Promise((r) => setTimeout(r, 1600));
+    setSimulationStep(0);
+
+    for (let i = 0; i < SIMULATION_STEPS.length; i++) {
+      await new Promise((r) => setTimeout(r, 350));
+      setSimulationStep(i);
+    }
+    await new Promise((r) => setTimeout(r, 200));
+
     setResults(computeResults(budget, duration, selectedPlatforms.length));
     setRunning(false);
   };
@@ -268,22 +289,13 @@ export default function SimulatorPage() {
 
             {/* ── Results panel ── */}
             {running && (
-              <div className="lg:col-span-3 flex flex-col items-center justify-center py-16 gap-4">
-                <div className="relative h-16 w-16">
-                  <div className="absolute inset-0 rounded-2xl bg-brand-50 dark:bg-brand-100/10 flex items-center justify-center">
-                    <BarChart2 className="h-8 w-8 text-brand-500" />
-                  </div>
-                  <div className="absolute -inset-1 rounded-[20px] border-2 border-brand-300/40 animate-ping" />
-                </div>
-                <div className="text-center">
-                  <p className="font-semibold text-ink">Running simulation...</p>
-                  <p className="text-sm text-ink-muted mt-1">
-                    Modeling {formatINR(budget)} across {selectedPlatforms.length} platform{selectedPlatforms.length > 1 ? "s" : ""}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-ink-faint">
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> Forecasting {duration} days of data…
-                </div>
+              <div className="lg:col-span-3">
+                <AiLoadingState
+                  title="Predicting Campaign Performance & ROI"
+                  subtitle={`Modeling ${formatINR(budget)} across ${selectedPlatforms.length} platform(s) over ${duration} days...`}
+                  steps={SIMULATION_STEPS}
+                  currentStepIndex={simulationStep}
+                />
               </div>
             )}
 

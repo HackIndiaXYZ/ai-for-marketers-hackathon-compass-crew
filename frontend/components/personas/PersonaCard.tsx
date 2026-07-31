@@ -60,21 +60,21 @@ export function PersonaCard({
       {/* Header with avatar + name */}
       <div className={cn("p-5 border-b border-surface-border", colorAccent[color])}>
         <div className="flex items-start gap-4">
-          <div className="h-14 w-14 rounded-2xl bg-surface-card border border-surface-border flex items-center justify-center text-3xl shrink-0 shadow-sm">
+          <div className="h-14 w-14 rounded-2xl bg-surface-card border border-surface-border flex items-center justify-center text-3xl shrink-0 shadow-md">
             {emoji}
           </div>
-          <div className="min-w-0">
-            <h3 className="font-bold text-ink text-base leading-tight">{name}</h3>
-            <p className="text-xs text-ink-muted mt-0.5">{ageRange}</p>
-            <div className="mt-2 flex items-center gap-1.5 text-xs text-ink-muted font-medium">
+          <div className="min-w-0 flex-1">
+            <h3 className="font-extrabold text-ink text-lg leading-tight tracking-tight">{name}</h3>
+            <p className="text-xs text-ink-muted mt-0.5 font-medium">{ageRange}</p>
+            <div className="mt-2.5 flex items-center gap-2 text-xs text-ink font-semibold">
               <ShoppingBag className="h-3.5 w-3.5 text-brand-500 shrink-0" />
               <span>{power.label}</span>
-              <div className="flex gap-0.5 ml-1">
+              <div className="flex gap-1 ml-auto">
                 {[1, 2, 3, 4].map((bar) => (
                   <div
                     key={bar}
                     className={cn(
-                      "h-3 w-1 rounded-sm transition-colors",
+                      "h-3.5 w-1.5 rounded-sm transition-colors",
                       bar <= power.bars ? power.color : "bg-surface-border"
                     )}
                   />
@@ -86,19 +86,19 @@ export function PersonaCard({
       </div>
 
       {/* Content */}
-      <div className="p-5 flex-1 space-y-4 text-xs">
+      <div className="p-5 flex-1 space-y-5 text-xs">
         {/* Description */}
-        <p className="text-ink-muted leading-relaxed text-sm">{description}</p>
+        <p className="text-ink-muted leading-relaxed text-sm font-normal">{description}</p>
 
-        {/* Core Needs */}
-        <div>
-          <p className="font-semibold uppercase tracking-wider text-ink-faint text-[10px] mb-2 flex items-center gap-1">
-            <Zap className="h-3 w-3 text-brand-500" /> Core Needs & Drivers
+        {/* Core Needs & Drivers */}
+        <div className="space-y-2 bg-surface-subtle/70 rounded-xl p-3 border border-surface-border">
+          <p className="font-bold uppercase tracking-wider text-ink text-[10px] flex items-center gap-1.5">
+            <Zap className="h-3.5 w-3.5 text-brand-500" /> Core Needs & Drivers
           </p>
           <ul className="space-y-1.5">
             {needs.map((need) => (
-              <li key={need} className="flex items-start gap-2 text-ink-muted text-xs">
-                <CheckCircle2 className="h-3.5 w-3.5 text-pain-low shrink-0 mt-0.5" />
+              <li key={need} className="flex items-start gap-2 text-ink text-xs font-medium">
+                <CheckCircle2 className="h-4 w-4 text-pain-low shrink-0 mt-0.5" />
                 <span>{need}</span>
               </li>
             ))}
@@ -106,15 +106,15 @@ export function PersonaCard({
         </div>
 
         {/* Top Pains Targeted */}
-        <div>
-          <p className="font-semibold uppercase tracking-wider text-ink-faint text-[10px] mb-2">
-            Top Pain Points Triggered
+        <div className="space-y-2">
+          <p className="font-bold uppercase tracking-wider text-pain-high text-[10px] flex items-center gap-1.5">
+            🔥 Top Pain Points Triggered
           </p>
-          <div className="space-y-1">
+          <div className="space-y-1.5">
             {topPains.map((pain) => (
               <div
                 key={pain}
-                className="rounded-lg bg-surface-subtle border border-surface-border px-2.5 py-1.5 text-xs text-ink italic"
+                className="rounded-lg bg-pain-high-bg/40 border border-pain-high/20 border-l-3 border-l-pain-high px-3 py-2 text-xs text-ink font-medium leading-snug italic"
               >
                 &ldquo;{pain}&rdquo;
               </div>
@@ -123,13 +123,13 @@ export function PersonaCard({
         </div>
 
         {/* Channels */}
-        <div>
-          <p className="font-semibold uppercase tracking-wider text-ink-faint text-[10px] mb-2 flex items-center gap-1">
-            <Globe2 className="h-3 w-3 text-brand-500" /> Preferred Channels
+        <div className="space-y-2">
+          <p className="font-bold uppercase tracking-wider text-ink text-[10px] flex items-center gap-1.5">
+            <Globe2 className="h-3.5 w-3.5 text-brand-500" /> Preferred Channels
           </p>
           <div className="flex flex-wrap gap-1.5">
             {channels.map((ch) => (
-              <Badge key={ch} variant="default" className="text-[10px]">
+              <Badge key={ch} variant="brand" className="text-xs px-2.5 py-0.5 font-semibold">
                 {ch}
               </Badge>
             ))}
@@ -138,9 +138,9 @@ export function PersonaCard({
       </div>
 
       {/* Footer CTA */}
-      <div className="px-5 py-3 border-t border-surface-border bg-surface-subtle/50 text-xs text-ink-faint flex items-center justify-between">
-        <span>AI-Generated Segment</span>
-        <span className="font-semibold text-brand-600 dark:text-brand-400">
+      <div className="px-5 py-3 border-t border-surface-border bg-surface-subtle/80 text-xs text-ink-faint flex items-center justify-between font-medium">
+        <span>AI-Generated Persona</span>
+        <span className="font-bold text-brand-600 dark:text-brand-400 flex items-center gap-1">
           Target in Campaigns →
         </span>
       </div>

@@ -22,6 +22,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
+import { motion, AnimatePresence } from "framer-motion";
+
 /* ── Tab config ─────────────────────────────────────────────── */
 const TABS = [
   { id: "account",     label: "Account",       icon: User    },
@@ -77,7 +79,7 @@ function useSave() {
     await new Promise((r) => setTimeout(r, 900));
     setSaving(false);
     setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    setTimeout(() => setSaved(false), 2500);
   };
   return { saving, saved, save };
 }
@@ -146,11 +148,14 @@ export default function SettingsPage() {
             <Button
               size="sm"
               loading={saving}
-              leftIcon={saved ? <Check className="h-3.5 w-3.5" /> : !saving ? <Save className="h-3.5 w-3.5" /> : undefined}
+              leftIcon={saved ? <Check className="h-4 w-4" /> : !saving ? <Save className="h-3.5 w-3.5" /> : undefined}
               onClick={save}
-              className={saved ? "bg-pain-low hover:bg-pain-low/90" : ""}
+              className={cn(
+                "transition-all duration-300",
+                saved ? "bg-pain-low text-white hover:bg-pain-low/90 border-transparent shadow-sm" : ""
+              )}
             >
-              {saved ? "Saved!" : "Save Changes"}
+              {saving ? "Saving..." : saved ? "Saved Successfully!" : "Save Changes"}
             </Button>
           </div>
 
@@ -161,9 +166,9 @@ export default function SettingsPage() {
                 key={id}
                 onClick={() => setActiveTab(id)}
                 className={cn(
-                  "flex items-center gap-1.5 whitespace-nowrap px-4 py-2.5 text-sm font-medium transition-all border-b-2 -mb-px shrink-0",
+                  "flex items-center gap-1.5 whitespace-nowrap px-4 py-2.5 text-sm font-medium transition-all border-b-2 -mb-px shrink-0 cursor-pointer",
                   activeTab === id
-                    ? "border-brand-500 text-brand-600 dark:text-brand-400"
+                    ? "border-brand-500 text-brand-600 dark:text-brand-400 font-semibold"
                     : "border-transparent text-ink-muted hover:text-ink hover:border-surface-border"
                 )}
               >
@@ -172,6 +177,16 @@ export default function SettingsPage() {
               </button>
             ))}
           </div>
+
+          {/* Tab Content with AnimatePresence */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+            >
 
           {/* ── Account ── */}
           {activeTab === "account" && (
@@ -391,6 +406,8 @@ export default function SettingsPage() {
               </Section>
             </div>
           )}
+          </motion.div>
+          </AnimatePresence>
 
         </main>
       </div>

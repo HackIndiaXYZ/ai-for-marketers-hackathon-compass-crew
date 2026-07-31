@@ -178,18 +178,18 @@ interface PieData {
 
 export function PainSeverityPie({ data }: { data: PieData[] }) {
   return (
-    <ResponsiveContainer width="100%" height={160}>
+    <ResponsiveContainer width="100%" height={210}>
       <PieChart>
         <Pie
           data={data}
           cx="50%"
-          cy="50%"
-          innerRadius={40}
-          outerRadius={60}
-          paddingAngle={3}
+          cy="45%"
+          innerRadius={50}
+          outerRadius={74}
+          paddingAngle={4}
           dataKey="value"
           isAnimationActive={true}
-          animationDuration={800}
+          animationDuration={900}
           animationEasing="ease-out"
         >
           {data.map((entry, index) => (
@@ -202,8 +202,8 @@ export function PainSeverityPie({ data }: { data: PieData[] }) {
         />
         <Legend
           iconType="circle"
-          iconSize={8}
-          wrapperStyle={{ fontSize: 11, color: CHART_COLORS.faint }}
+          iconSize={9}
+          wrapperStyle={{ fontSize: 11, color: CHART_COLORS.faint, paddingTop: 10 }}
         />
       </PieChart>
     </ResponsiveContainer>

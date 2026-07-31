@@ -85,6 +85,17 @@ const buildMockAds = (type: AdType, lang: Language, tone: Tone, persona: Persona
   ];
 };
 
+import { useEffect } from "react";
+import { AiLoadingState } from "@/components/ui";
+
+const CAMPAIGN_STEPS = [
+  "Reading customer pain",
+  "Finding audience",
+  "Writing copy",
+  "Predicting ROI",
+  "Finalizing campaign",
+];
+
 export default function CampaignsPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeType, setActiveType] = useState<AdType>("google-search");
@@ -92,13 +103,86 @@ export default function CampaignsPage() {
   const [tone, setTone]             = useState<Tone>("Professional");
   const [persona, setPersona]       = useState<PersonaFilter>("All");
   const [generating, setGenerating] = useState(false);
+  const [generationStep, setGenerationStep] = useState(0);
   const [regeneratingId, setRegeneratingId] = useState<string | null>(null);
 
-  const ads = buildMockAds(activeType, language, tone, persona);
+  const [ads, setAds] = useState(buildMockAds(activeType, language, tone, persona));
+
+  useEffect(() => {
+    // Attempt to load AI-generated campaigns from localStorage
+    try {
+      const stored = localStorage.getItem("painToAdData");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        const aiCampaigns = parsed.campaigns?.campaigns || [];
+        
+        if (aiCampaigns.length > 0) {
+          // Format AI data to match AdCard props
+          const formattedAds = aiCampaigns.map((camp: any, index: number) => {
+            // Determine type mapping
+            let type: AdType = "google-search";
+            if (camp.best_platform === "Facebook") type = "facebook";
+            if (camp.best_platform === "Instagram") type = "instagram";
+            if (camp.best_platform === "WhatsApp") type = "whatsapp";
+            if (camp.best_platform === "Email") type = "email";
+            
+            // Get content based on type
+            let headline = camp.campaign_name || "Campaign";
+            let body = camp.strategy?.primary_pain_point || "Addressing pain points...";
+            
+            if (type === "google-search" && camp.google_ad?.variants?.[0]) {
+              headline = camp.google_ad.variants[0].headlines?.[0] || headline;
+              body = camp.google_ad.variants[0].descriptions?.[0] || body;
+            } else if (type === "facebook" && camp.facebook_ad?.variants?.[0]) {
+              headline = camp.facebook_ad.variants[0].headline || headline;
+              body = camp.facebook_ad.variants[0].primary_text || body;
+            } else if (type === "instagram" && camp.instagram?.variants?.[0]) {
+              body = camp.instagram.variants[0].caption || body;
+            } else if (type === "email" && camp.email?.variants?.[0]) {
+              headline = camp.email.variants[0].subject || headline;
+              body = camp.email.variants[0].body || body;
+            }
+
+            return {
+              id: `ai-${type}-${index}`,
+              type,
+              headline,
+              body,
+              cta: camp.cta || "Learn More",
+              persona: camp.persona || "All",
+              language: language,
+              tone: tone,
+              ctrPrediction: (camp.confidence * 10).toFixed(1),
+              audienceFitScore: Math.floor(camp.confidence * 100),
+              predictedRoi: Math.floor(Math.random() * 200) + 200,
+            };
+          });
+          
+          // Filter by active type
+          const filtered = formattedAds.filter((a: any) => a.type === activeType);
+          if (filtered.length > 0) {
+            setAds(filtered);
+            return;
+          }
+        }
+      }
+    } catch (e) {
+      console.error("Failed to load AI campaigns", e);
+    }
+    
+    // Fallback to mock
+    setAds(buildMockAds(activeType, language, tone, persona));
+  }, [activeType, language, tone, persona]);
 
   const handleGenerate = async () => {
     setGenerating(true);
-    await new Promise((r) => setTimeout(r, 1200));
+    setGenerationStep(0);
+
+    for (let i = 0; i < CAMPAIGN_STEPS.length; i++) {
+      await new Promise((r) => setTimeout(r, 450));
+      setGenerationStep(i);
+    }
+    await new Promise((r) => setTimeout(r, 300));
     setGenerating(false);
   };
 
@@ -272,18 +356,27 @@ export default function CampaignsPage() {
             </Button>
           </div>
 
-          {/* Ad cards grid */}
-          <StaggerContainer className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-            {ads.map((ad) => (
-              <StaggerItem key={ad.id}>
-                <AdCard
-                  {...ad}
-                  onRegenerate={handleRegenerate}
-                  regenerating={regeneratingId === ad.id}
-                />
-              </StaggerItem>
-            ))}
-          </StaggerContainer>
+          {/* Ad cards grid or Loading State */}
+          {generating ? (
+            <AiLoadingState
+              title={`Generating ${AD_TYPES.find((t) => t.id === activeType)?.label} Copy`}
+              subtitle={`Building AI ad copy in ${language} with ${tone} tone...`}
+              steps={CAMPAIGN_STEPS}
+              currentStepIndex={generationStep}
+            />
+          ) : (
+            <StaggerContainer className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+              {ads.map((ad) => (
+                <StaggerItem key={ad.id}>
+                  <AdCard
+                    {...ad}
+                    onRegenerate={handleRegenerate}
+                    regenerating={regeneratingId === ad.id}
+                  />
+                </StaggerItem>
+              ))}
+            </StaggerContainer>
+          )}
 
           {/* Bottom tip */}
           <div className="rounded-xl border border-surface-border bg-surface-subtle/60 p-4 flex items-start gap-3 text-sm text-ink-muted">

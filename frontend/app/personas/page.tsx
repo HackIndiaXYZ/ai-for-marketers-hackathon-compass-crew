@@ -80,13 +80,51 @@ const PERSONAS: (PersonaCardProps & { id: string })[] = [
   },
 ];
 
+import { useEffect } from "react";
+
 export default function PersonasPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [filterPower, setFilterPower] = useState<"all" | "low" | "medium" | "high" | "premium">("all");
+  const [personasData, setPersonasData] = useState<(PersonaCardProps & { id: string })[]>(PERSONAS);
 
-  const filtered = PERSONAS.filter((p) => {
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("painToAdData");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        const aiPersonas = parsed.personas?.personas || [];
+        
+        if (aiPersonas.length > 0) {
+          const formatted = aiPersonas.map((p: any, index: number) => {
+            let power: "low" | "medium" | "high" | "premium" = "medium";
+            const inc = (p.income_level || p.customer_value || "").toLowerCase();
+            if (inc.includes("high") || inc.includes("premium")) power = "high";
+            if (inc.includes("low") || inc.includes("budget")) power = "low";
+
+            return {
+              id: `ai-persona-${index}`,
+              emoji: ["💼", "👨‍👩‍👧", "🚀", "🎯", "🎓", "📱"][index % 6],
+              name: p.persona_name || "Target Persona",
+              ageRange: `${p.age_group || "Unknown"} · ${p.occupation || ""}`,
+              description: p.buying_behaviour || p.marketing_message || "Target customer based on AI analysis.",
+              needs: p.primary_goals || p.decision_factors || ["Reliability", "Trust"],
+              purchasingPower: power,
+              channels: p.preferred_channels || ["Digital Platforms"],
+              topPains: p.pain_points || ["Various frustrations"],
+              color: power === "high" || power === "premium" ? "high" : power === "medium" ? "medium" : "brand",
+            };
+          });
+          setPersonasData(formatted);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to load AI personas", e);
+    }
+  }, []);
+
+  const filtered = personasData.filter((p) => {
     if (filterPower === "all") return true;
-    return p.purchasingPower === filterPower;
+    return p.purchasingPower === filterPower || (filterPower === "high" && p.purchasingPower === "premium");
   });
 
   return (
@@ -107,7 +145,7 @@ export default function PersonasPage() {
             <div className="flex items-center gap-2">
               <Badge variant="brand">
                 <Sparkles className="h-3.5 w-3.5" />
-                {PERSONAS.length} Active Personas
+                {personasData.length} Active Personas
               </Badge>
             </div>
           </div>
@@ -115,9 +153,9 @@ export default function PersonasPage() {
           {/* Stats summary */}
           <StaggerContainer className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[
-              { label: "Total Personas",    value: PERSONAS.length,                                             sub: "Across all topics" },
-              { label: "High Spenders",     value: PERSONAS.filter((p) => p.purchasingPower === "high").length, sub: "Premium + High" },
-              { label: "Budget Conscious",  value: PERSONAS.filter((p) => p.purchasingPower === "low").length,  sub: "Price-sensitive" },
+              { label: "Total Personas",    value: personasData.length,                                             sub: "Across all topics" },
+              { label: "High Spenders",     value: personasData.filter((p) => p.purchasingPower === "high" || p.purchasingPower === "premium").length, sub: "Premium + High" },
+              { label: "Budget Conscious",  value: personasData.filter((p) => p.purchasingPower === "low").length,  sub: "Price-sensitive" },
               { label: "Channels Covered",  value: 10,                                                          sub: "Across all personas" },
             ].map((s) => (
               <StaggerItem key={s.label}>

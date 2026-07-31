@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import {
   Lightbulb,
   Sparkles,
@@ -11,10 +10,13 @@ import {
   BarChart2,
   RefreshCw,
   ChevronDown,
-  ChevronUp,
   BookOpen,
   Zap,
   ArrowRight,
+  Copy,
+  Download,
+  Share2,
+  Check,
 } from "lucide-react";
 import Link from "next/link";
 import { Sidebar } from "@/components/sidebar/Sidebar";
@@ -22,6 +24,7 @@ import { Navbar } from "@/components/navbar/Navbar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { Modal } from "@/components/ui/modal";
 import { StaggerContainer, StaggerItem } from "@/components/ui/motion";
 import { cn } from "@/lib/utils";
 
@@ -143,89 +146,188 @@ const BRIEFS: InsightBrief[] = [
 ];
 
 function BriefCard({ brief }: { brief: InsightBrief }) {
-  const [expanded, setExpanded] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [shared, setShared] = useState(false);
+
   const cfg = categoryConfig[brief.category];
   const Icon = cfg.icon;
 
+  const getBriefText = () => {
+    return `# ${brief.title}\nCategory: ${brief.category} | ${brief.date}\n\n## Summary\n${brief.summary}\n\n## Key Findings\n${brief.keyFindings.map((f) => `- ${f}`).join("\n")}\n\n## Recommendations\n${brief.recommendations.map((r) => `- ${r}`).join("\n")}\n\nStat: ${brief.stat.value} ${brief.stat.label}`;
+  };
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(getBriefText());
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleShare = () => {
+    navigator.clipboard.writeText(`https://paintoad.ai/insights#${brief.id}`);
+    setShared(true);
+    setTimeout(() => setShared(false), 2000);
+  };
+
+  const handleExport = () => {
+    const element = document.createElement("a");
+    const file = new Blob([getBriefText()], { type: "text/markdown" });
+    element.href = URL.createObjectURL(file);
+    element.download = `${brief.id}-${brief.title.toLowerCase().replace(/[^a-z0-9]/g, "-")}.md`;
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+  };
+
   return (
-    <Card className="flex flex-col justify-between hover:shadow-card-hover transition-all">
-      <div className="p-5">
-        {/* Header tags */}
-        <div className="flex items-center justify-between gap-2 mb-3">
-          <div className="flex items-center gap-2">
+    <>
+      <Card className="flex flex-col justify-between hover:shadow-card-hover transition-all">
+        <div className="p-5">
+          {/* Header tags */}
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <div className="flex items-center gap-2">
+              <span className={cn("inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold border", cfg.color)}>
+                <Icon className="h-3.5 w-3.5" />
+                {brief.category}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-ink-faint">
+              <span>{brief.readTime}</span>
+              <span>·</span>
+              <span>{brief.date}</span>
+            </div>
+          </div>
+
+          {/* Title & Summary */}
+          <h3 className="font-bold text-ink text-base leading-snug">{brief.title}</h3>
+          <p className="text-sm text-ink-muted mt-2 leading-relaxed">{brief.summary}</p>
+
+          {/* Key stat */}
+          <div className={cn("mt-4 rounded-xl p-3 border flex items-center gap-3", cfg.color)}>
+            <Zap className="h-5 w-5 shrink-0" />
+            <div>
+              <span className="text-2xl font-black leading-none">{brief.stat.value}</span>
+              <span className="text-xs ml-2 leading-snug">{brief.stat.label}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer actions */}
+        <div className="px-5 py-3.5 flex items-center justify-between border-t border-surface-border bg-surface-subtle/50">
+          <Button
+            variant="ghost"
+            size="xs"
+            onClick={() => setModalOpen(true)}
+            leftIcon={<BookOpen className="h-3.5 w-3.5" />}
+            className="text-brand-600 dark:text-brand-400 font-semibold"
+          >
+            Read Full Brief
+          </Button>
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="icon-sm" onClick={handleCopy} title="Copy Brief">
+              {copied ? <Check className="h-3.5 w-3.5 text-pain-low" /> : <Copy className="h-3.5 w-3.5 text-ink-muted" />}
+            </Button>
+            <Button variant="ghost" size="icon-sm" onClick={handleExport} title="Export Markdown">
+              <Download className="h-3.5 w-3.5 text-ink-muted" />
+            </Button>
+            <Button variant="ghost" size="icon-sm" onClick={handleShare} title="Share Brief Link">
+              {shared ? <Check className="h-3.5 w-3.5 text-pain-low" /> : <Share2 className="h-3.5 w-3.5 text-ink-muted" />}
+            </Button>
+          </div>
+        </div>
+      </Card>
+
+      {/* Modal Dialog for Full Brief */}
+      <Modal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title={brief.title}
+        size="lg"
+        footer={
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleCopy}
+                leftIcon={copied ? <Check className="h-3.5 w-3.5 text-pain-low" /> : <Copy className="h-3.5 w-3.5" />}
+              >
+                {copied ? "Copied!" : "Copy Brief"}
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleExport}
+                leftIcon={<Download className="h-3.5 w-3.5" />}
+              >
+                Export MD
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleShare}
+                leftIcon={shared ? <Check className="h-3.5 w-3.5 text-pain-low" /> : <Share2 className="h-3.5 w-3.5" />}
+              >
+                {shared ? "Link Copied" : "Share"}
+              </Button>
+            </div>
+            <Link href="/campaigns">
+              <Button size="sm" rightIcon={<ArrowRight className="h-3.5 w-3.5" />}>
+                Apply to Campaigns
+              </Button>
+            </Link>
+          </div>
+        }
+      >
+        <div className="space-y-6">
+          <div className="flex items-center justify-between border-b border-surface-border pb-3">
             <span className={cn("inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold border", cfg.color)}>
               <Icon className="h-3.5 w-3.5" />
               {brief.category}
             </span>
+            <span className="text-xs text-ink-faint">{brief.readTime} · Published {brief.date}</span>
           </div>
-          <div className="flex items-center gap-2 text-xs text-ink-faint">
-            <span>{brief.readTime}</span>
-            <span>·</span>
-            <span>{brief.date}</span>
+
+          <div className="space-y-2">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-ink-faint">Executive Summary</h4>
+            <p className="text-sm text-ink leading-relaxed">{brief.summary}</p>
+          </div>
+
+          <div className={cn("rounded-xl p-4 border flex items-center gap-4", cfg.color)}>
+            <Zap className="h-6 w-6 shrink-0" />
+            <div>
+              <p className="text-3xl font-black leading-none">{brief.stat.value}</p>
+              <p className="text-xs font-medium mt-1">{brief.stat.label}</p>
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-5 pt-2">
+            <div className="space-y-3 bg-surface-subtle/60 rounded-xl p-4 border border-surface-border">
+              <p className="text-xs font-bold uppercase tracking-wider text-ink">🔍 Key Research Findings</p>
+              <ul className="space-y-2">
+                {brief.keyFindings.map((f, i) => (
+                  <li key={i} className="flex items-start gap-2 text-xs text-ink-muted leading-snug">
+                    <span className="text-pain-high font-bold shrink-0">●</span>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="space-y-3 bg-surface-subtle/60 rounded-xl p-4 border border-surface-border">
+              <p className="text-xs font-bold uppercase tracking-wider text-ink">✅ Strategic Recommendations</p>
+              <ul className="space-y-2">
+                {brief.recommendations.map((r, i) => (
+                  <li key={i} className="flex items-start gap-2 text-xs text-ink-muted leading-snug">
+                    <span className="text-pain-low font-bold shrink-0">→</span>
+                    {r}
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </div>
-
-        {/* Title & Summary */}
-        <h3 className="font-bold text-ink text-base leading-snug">{brief.title}</h3>
-        <p className="text-sm text-ink-muted mt-2 leading-relaxed">{brief.summary}</p>
-
-        {/* Key stat */}
-        <div className={cn("mt-4 rounded-xl p-3 border flex items-center gap-3", cfg.color)}>
-          <Zap className="h-5 w-5 shrink-0" />
-          <div>
-            <span className="text-2xl font-black leading-none">{brief.stat.value}</span>
-            <span className="text-xs ml-2 leading-snug">{brief.stat.label}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Expandable findings + recommendations */}
-      {expanded && (
-        <div className="p-5 grid md:grid-cols-2 gap-5 border-b border-surface-border animate-fade-in">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-ink-faint mb-2">🔍 Key Findings</p>
-            <ul className="space-y-2">
-              {brief.keyFindings.map((f, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-ink-muted">
-                  <span className="text-pain-high mt-0.5 shrink-0">●</span>
-                  {f}
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-ink-faint mb-2">✅ Recommendations</p>
-            <ul className="space-y-2">
-              {brief.recommendations.map((r, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-ink-muted">
-                  <span className="text-pain-low mt-0.5 shrink-0">→</span>
-                  {r}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      )}
-
-      {/* Footer */}
-      <div className="px-5 py-3 flex items-center justify-between">
-        <button
-          onClick={() => setExpanded((v) => !v)}
-          className="flex items-center gap-1.5 text-xs font-medium text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 transition-colors"
-        >
-          {expanded ? (
-            <><ChevronUp className="h-3.5 w-3.5" /> Collapse findings</>
-          ) : (
-            <><ChevronDown className="h-3.5 w-3.5" /> Read full brief</>
-          )}
-        </button>
-        <Link href="/campaigns">
-          <Button variant="ghost" size="xs" rightIcon={<ArrowRight className="h-3 w-3" />}>
-            Apply to Campaigns
-          </Button>
-        </Link>
-      </div>
-    </Card>
+      </Modal>
+    </>
   );
 }
 

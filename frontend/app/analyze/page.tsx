@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { AiLoadingState, EmptyState } from "@/components/ui";
 import { PainCard, type PainCardProps, type Intensity } from "@/components/paincards/PainCard";
 import { cn } from "@/lib/utils";
 
@@ -148,6 +149,9 @@ const MOCK_RESULTS: PainCardProps[] = [
 type FilterIntensity = "all" | Intensity;
 type SortOption = "impact" | "mentions" | "intensity";
 
+import { analyzeBusiness } from "@/lib/api";
+import { getMockReviewsForTopic } from "@/lib/mockReviews";
+
 /* ── Page ──────────────────────────────────────────────────── */
 export default function AnalyzePage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -174,13 +178,47 @@ export default function AnalyzePage() {
     setResults(null);
     setCurrentStep(0);
 
-    for (let i = 0; i < SCRAPE_STEPS.length; i++) {
-      await new Promise((r) => setTimeout(r, 700));
-      setCurrentStep(i);
+    try {
+      // Start fake progress for better UX
+      const progressInterval = setInterval(() => {
+        setCurrentStep((prev) => Math.min(prev + 1, SCRAPE_STEPS.length - 2));
+      }, 5000); // Progress slowly over the long AI wait time
+
+      const reviews = getMockReviewsForTopic(topic);
+      const data = await analyzeBusiness(topic, reviews);
+
+      clearInterval(progressInterval);
+      setCurrentStep(SCRAPE_STEPS.length - 1);
+
+      if (data && data.success && data.data) {
+        // Save full pipeline data to localStorage for other pages
+        localStorage.setItem("painToAdData", JSON.stringify(data.data));
+
+        // Format pain points for the UI
+        const painPoints = data.data.pain_analysis?.pain_points || [];
+        const formattedResults: PainCardProps[] = painPoints.map((p: any, index: number) => ({
+          id: `ai-pain-${index}`,
+          quote: p.quotes?.[0] || "No quote provided",
+          topic: p.title || p.category || "Unknown Issue",
+          platform: "Analyzed Voice",
+          mentions: p.frequency || Math.floor(Math.random() * 200) + 10,
+          intensity: (p.priority || "medium").toLowerCase(),
+          impactScore: p.severity ? p.severity * 10 : Math.floor(Math.random() * 50) + 50,
+          emotionTags: [p.emotion || "Frustrated"],
+          supportingQuotes: p.quotes?.slice(1) || [],
+        }));
+
+        setResults(formattedResults.length > 0 ? formattedResults : MOCK_RESULTS);
+      } else {
+        setResults(MOCK_RESULTS);
+      }
+    } catch (error) {
+      console.error("API Analysis Failed:", error);
+      // Fallback to mock on error
+      setResults(MOCK_RESULTS);
+    } finally {
+      setIsAnalyzing(false);
     }
-    await new Promise((r) => setTimeout(r, 400));
-    setResults(MOCK_RESULTS);
-    setIsAnalyzing(false);
   };
 
   const filtered = (results ?? [])
@@ -189,8 +227,8 @@ export default function AnalyzePage() {
       if (sortBy === "impact")    return b.impactScore - a.impactScore;
       if (sortBy === "mentions")  return b.mentions - a.mentions;
       if (sortBy === "intensity") {
-        const order = { high: 0, medium: 1, low: 2 };
-        return order[a.intensity] - order[b.intensity];
+        const order: Record<string, number> = { high: 0, medium: 1, low: 2 };
+        return (order[a.intensity] ?? 2) - (order[b.intensity] ?? 2);
       }
       return 0;
     });
@@ -298,59 +336,12 @@ export default function AnalyzePage() {
 
           {/* Loading state */}
           {isAnalyzing && (
-            <Card>
-              <div className="flex flex-col items-center py-8 gap-5">
-                <div className="relative h-16 w-16">
-                  <div className="absolute inset-0 rounded-2xl bg-brand-100 dark:bg-brand-100/10 flex items-center justify-center">
-                    <Sparkles className="h-8 w-8 text-brand-500 animate-pulse" />
-                  </div>
-                  <div className="absolute -inset-1 rounded-[20px] border-2 border-brand-300/40 animate-ping" />
-                </div>
-
-                <div className="text-center">
-                  <p className="font-semibold text-ink text-base">
-                    {SCRAPE_STEPS[currentStep]}
-                  </p>
-                  <p className="text-sm text-ink-muted mt-1">
-                    Analyzing &ldquo;{topic}&rdquo; across {selectedPlatforms.length} platforms
-                  </p>
-                </div>
-
-                {/* Step progress */}
-                <div className="w-full max-w-sm space-y-2">
-                  {SCRAPE_STEPS.map((step, i) => (
-                    <div key={step} className="flex items-center gap-3">
-                      <div
-                        className={cn(
-                          "h-5 w-5 rounded-full flex items-center justify-center shrink-0 transition-all duration-300",
-                          i < currentStep
-                            ? "bg-pain-low text-white"
-                            : i === currentStep
-                            ? "bg-brand-500 text-white"
-                            : "bg-surface-border"
-                        )}
-                      >
-                        {i < currentStep ? (
-                          <span className="text-[10px]">✓</span>
-                        ) : i === currentStep ? (
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                        ) : (
-                          <span className="h-2 w-2 rounded-full bg-surface-border" />
-                        )}
-                      </div>
-                      <span
-                        className={cn(
-                          "text-xs transition-colors",
-                          i <= currentStep ? "text-ink" : "text-ink-faint"
-                        )}
-                      >
-                        {step}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </Card>
+            <AiLoadingState
+              title={`Analyzing customer pain points for "${topic}"`}
+              subtitle={`Scraping and analyzing voice-of-customer content across ${selectedPlatforms.length} platform(s)...`}
+              steps={SCRAPE_STEPS}
+              currentStepIndex={currentStep}
+            />
           )}
 
           {/* Results */}
@@ -439,27 +430,13 @@ export default function AnalyzePage() {
 
           {/* Empty initial state */}
           {!results && !isAnalyzing && (
-            <Card className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="h-16 w-16 rounded-2xl bg-brand-50 dark:bg-brand-100/10 border border-brand-200 dark:border-brand-600/30 flex items-center justify-center mb-5">
-                <Search className="h-8 w-8 text-brand-400" />
-              </div>
-              <h3 className="font-semibold text-ink text-lg">Ready to analyze</h3>
-              <p className="text-sm text-ink-muted mt-2 max-w-sm">
-                Enter a business topic above and select platforms to start discovering what your
-                customers are really complaining about.
-              </p>
-              <div className="mt-5 flex flex-wrap justify-center gap-2">
-                {["SaaS onboarding", "fintech app", "food delivery", "e-commerce returns"].map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => setTopic(s)}
-                    className="rounded-full border border-surface-border px-3 py-1 text-xs text-ink-muted hover:border-brand-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            </Card>
+            <EmptyState
+              icon={Search}
+              title="Ready to Analyze Pain Points"
+              description="Enter a business topic above and select platforms to start discovering what real customers are complaining about on Reddit, Quora, and Google Reviews."
+              exampleInputs={["SaaS onboarding", "fintech app", "food delivery", "e-commerce returns"]}
+              onSelectExample={(s) => setTopic(s)}
+            />
           )}
         </main>
       </div>

@@ -40,10 +40,12 @@ const accentMap = {
   low:    { bg: "bg-pain-low-bg",                     icon: "text-pain-low",                         border: "border-pain-low/20" },
 };
 
+import { AnimatedCounter } from "@/components/ui/AnimatedCounter";
+
 export function StatCard({ label, value, sub, trend, trendLabel, accent = "brand", icon: Icon }: StatCardProps) {
   const a = accentMap[accent];
   return (
-    <Card className="flex flex-col gap-4">
+    <Card className="flex flex-col gap-4 hover-lift">
       <div className="flex items-start justify-between">
         <div className={cn("h-10 w-10 rounded-xl flex items-center justify-center border", a.bg, a.border)}>
           <Icon className={cn("h-5 w-5", a.icon)} />
@@ -63,7 +65,9 @@ export function StatCard({ label, value, sub, trend, trendLabel, accent = "brand
         )}
       </div>
       <div>
-        <p className="text-3xl font-bold text-ink tracking-tight leading-none">{value}</p>
+        <p className="text-3xl font-bold text-ink tracking-tight leading-none">
+          <AnimatedCounter value={value} />
+        </p>
         <p className="text-sm text-ink-muted mt-1">{label}</p>
         {sub && <p className="text-xs text-ink-faint mt-0.5">{sub}</p>}
       </div>

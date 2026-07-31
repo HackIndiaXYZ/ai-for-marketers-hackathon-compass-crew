@@ -163,15 +163,21 @@ export default function DashboardPage() {
         <main className="flex-1 p-5 lg:p-8 space-y-6">
 
           {/* ── Page Header ── */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-surface-card p-5 rounded-2xl border border-surface-border shadow-xs">
             <div>
-              <h1 className="text-2xl font-bold text-ink tracking-tight">Dashboard</h1>
-              <p className="text-sm text-ink-muted mt-0.5">
-                Good morning, Muskan ·{" "}
-                <span className="text-brand-500 font-medium">Compass Crew</span>
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-bold text-ink tracking-tight">Dashboard</h1>
+                <Badge variant="brand" className="animate-pulse">
+                  <Sparkles className="h-3 w-3" /> AI Live Intelligence
+                </Badge>
+              </div>
+              <p className="text-sm text-ink-muted mt-1 flex flex-wrap items-center gap-1.5">
+                <span className="font-semibold text-ink">529 new pain points discovered</span> across 7 platforms this week.
+                <span className="hidden sm:inline">·</span>
+                <span className="text-pain-low font-medium">Highest ROI prediction: 340%</span>
               </p>
             </div>
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2.5 shrink-0">
               <Button
                 variant="ghost"
                 size="sm"
@@ -182,7 +188,7 @@ export default function DashboardPage() {
                 Refresh
               </Button>
               <Link href="/analyze">
-                <Button size="sm" leftIcon={<Sparkles className="h-3.5 w-3.5" />}>
+                <Button size="sm" className="shadow-md shadow-brand-500/20 hover:shadow-lg hover:shadow-brand-500/30 transition-all" leftIcon={<Sparkles className="h-3.5 w-3.5" />}>
                   New Analysis
                 </Button>
               </Link>

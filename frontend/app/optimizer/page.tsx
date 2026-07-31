@@ -26,12 +26,14 @@ import {
   PolarAngleAxis,
   PolarRadiusAxis,
 } from "recharts";
+import { motion } from "framer-motion";
 import { Sidebar } from "@/components/sidebar/Sidebar";
 import { Navbar } from "@/components/navbar/Navbar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { StaggerContainer, StaggerItem, FadeInUp } from "@/components/ui/motion";
+import { StaggerContainer, StaggerItem, FadeInUp, SPRING_BOUNCY } from "@/components/ui/motion";
+import { AnimatedCounter } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
 /* ── Chart colors ───────────────────────────────────────────── */
@@ -114,11 +116,93 @@ function MetricCard({
   );
 }
 
+import { useEffect } from "react";
+
 /* ── Page ──────────────────────────────────────────────────── */
 export default function OptimizerPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [optimizing, setOptimizing] = useState(false);
-  const [winner] = useState<"A" | "B">("A");
+  
+  const [variants, setVariants] = useState(VARIANTS);
+  const [barData, setBarData] = useState(BAR_DATA);
+  const [radarData, setRadarData] = useState(RADAR_DATA);
+  const [budgetSplit, setBudgetSplit] = useState(BUDGET_SPLIT);
+  const [winner, setWinner] = useState<"A" | "B">("A");
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("painToAdData");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        const aiCamps = parsed.campaigns?.campaigns || [];
+        const aiOptims = parsed.optimization?.optimized_campaigns || [];
+        
+        if (aiCamps.length >= 2 && aiOptims.length >= 2) {
+          // Sort optimizations by rank
+          const sortedOptims = [...aiOptims].sort((a, b) => a.rank - b.rank);
+          const top2Optims = sortedOptims.slice(0, 2);
+          
+          // Find corresponding campaigns
+          const campA = aiCamps.find((c: any) => c.campaign_name === top2Optims[0].campaign_name) || aiCamps[0];
+          const campB = aiCamps.find((c: any) => c.campaign_name === top2Optims[1].campaign_name) || aiCamps[1];
+          
+          // Generate realistic looking data based on AI scores
+          const scoreA = (top2Optims[0].optimization_score || 9) * 10;
+          const scoreB = (top2Optims[1].optimization_score || 7) * 10;
+          
+          const ctrA = parseFloat(((scoreA / 100) * 5 + Math.random()).toFixed(1));
+          const ctrB = parseFloat(((scoreB / 100) * 5 + Math.random()).toFixed(1));
+          
+          const budgetA = top2Optims[0].budget_allocation || 65;
+          const budgetB = top2Optims[1].budget_allocation || 35;
+          
+          // Update variants
+          setVariants([
+            {
+              id: "A",
+              label: "Variant A",
+              headline: campA.google_ad?.variants?.[0]?.headlines?.[0] || campA.campaign_name,
+              body: campA.google_ad?.variants?.[0]?.descriptions?.[0] || campA.strategy?.primary_pain_point || "",
+              persona: campA.persona,
+              tone: campA.emotion,
+              ctr: ctrA,
+              convRate: parseFloat((ctrA * 0.5).toFixed(1)),
+              cpc: 25 - Math.floor(scoreA / 10),
+              audienceMatch: Math.floor(scoreA),
+              reach: 42000,
+              score: Math.floor(scoreA),
+            },
+            {
+              id: "B",
+              label: "Variant B",
+              headline: campB.google_ad?.variants?.[0]?.headlines?.[0] || campB.campaign_name,
+              body: campB.google_ad?.variants?.[0]?.descriptions?.[0] || campB.strategy?.primary_pain_point || "",
+              persona: campB.persona,
+              tone: campB.emotion,
+              ctr: ctrB,
+              convRate: parseFloat((ctrB * 0.5).toFixed(1)),
+              cpc: 25 - Math.floor(scoreB / 10),
+              audienceMatch: Math.floor(scoreB),
+              reach: 38000,
+              score: Math.floor(scoreB),
+            }
+          ]);
+          
+          // Update charts
+          setBarData([
+            { metric: "CTR (%)",       A: ctrA,  B: ctrB  },
+            { metric: "Conv. Rate (%)",A: parseFloat((ctrA * 0.5).toFixed(1)),  B: parseFloat((ctrB * 0.5).toFixed(1))  },
+            { metric: "Audience Match",A: Math.floor(scoreA),   B: Math.floor(scoreB)   },
+          ]);
+          
+          setBudgetSplit({ A: budgetA, B: budgetB });
+          setWinner(scoreA >= scoreB ? "A" : "B");
+        }
+      }
+    } catch (e) {
+      console.error("Failed to load AI optimizations", e);
+    }
+  }, []);
 
   const handleOptimize = async () => {
     setOptimizing(true);
@@ -154,33 +238,40 @@ export default function OptimizerPage() {
           </div>
 
           {/* Winner banner */}
-          <FadeInUp className="rounded-xl border border-pain-low/30 bg-pain-low-bg p-4 flex items-center gap-4">
-            <div className="h-10 w-10 rounded-xl bg-pain-low/20 border border-pain-low/30 flex items-center justify-center shrink-0">
-              <Trophy className="h-5 w-5 text-pain-low" />
-            </div>
+          <FadeInUp className="rounded-2xl border border-pain-low/30 bg-pain-low-bg p-4 flex items-center gap-4 shadow-sm">
+            <motion.div
+              initial={{ scale: 0.8, rotate: -10 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={SPRING_BOUNCY}
+              className="h-11 w-11 rounded-xl bg-pain-low/20 border border-pain-low/30 flex items-center justify-center shrink-0 shadow-sm"
+            >
+              <Trophy className="h-6 w-6 text-pain-low animate-pulse" />
+            </motion.div>
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-ink text-sm">
-                Variant {winner} is the recommended winner — Score {VARIANTS.find(v => v.id === winner)?.score}/100
+              <p className="font-bold text-ink text-sm">
+                Variant {winner} is the recommended winner — Score <AnimatedCounter value={variants.find(v => v.id === winner)?.score || 87} />/100
               </p>
-              <p className="text-xs text-ink-muted mt-0.5">
+              <p className="text-xs text-ink-muted mt-0.5 font-medium">
                 Higher CTR, better audience match score, and lower CPC. Allocate 65% of budget here.
               </p>
             </div>
-            <Badge variant="low">
-              <Trophy className="h-3 w-3" />
-              Winner
-            </Badge>
+            <motion.div whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.95 }}>
+              <Badge variant="low" className="shadow-xs px-3 py-1 text-xs font-bold flex items-center gap-1">
+                <Trophy className="h-3.5 w-3.5" />
+                WINNER
+              </Badge>
+            </motion.div>
           </FadeInUp>
 
           {/* Variant copy side-by-side */}
           <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {VARIANTS.map((v) => (
+            {variants.map((v) => (
               <StaggerItem key={v.id}>
-                <Card className={cn("relative h-full", v.id === winner && "ring-2 ring-pain-low ring-offset-2 ring-offset-surface-bg")}>
+                <Card className={cn("relative h-full transition-all", v.id === winner && "ring-2 ring-pain-low ring-offset-2 ring-offset-surface-bg shadow-md")}>
                   {v.id === winner && (
                     <div className="absolute -top-3 left-4">
-                      <Badge variant="low" className="shadow-sm">
-                        <Trophy className="h-3 w-3" /> Recommended
+                      <Badge variant="low" className="shadow-xs font-bold">
+                        <Trophy className="h-3 w-3" /> Recommended Winner
                       </Badge>
                     </div>
                   )}
@@ -192,24 +283,32 @@ export default function OptimizerPage() {
                       <span>{v.tone}</span>
                     </div>
                   </div>
-                  <p className="font-semibold text-ink text-sm leading-snug">{v.headline}</p>
+                  <p className="font-bold text-ink text-base leading-snug">{v.headline}</p>
                   <p className="text-sm text-ink-muted mt-2 leading-relaxed">{v.body}</p>
-                  <div className="mt-4 flex items-center gap-4">
+                  <div className="mt-5 flex items-center justify-between rounded-xl bg-surface-subtle p-3 border border-surface-border">
                     <div className="text-center">
-                      <p className="text-lg font-bold text-ink">{v.score}</p>
-                      <p className="text-[10px] text-ink-faint">AI Score</p>
+                      <p className="text-xl font-black text-brand-600 dark:text-brand-400">
+                        <AnimatedCounter value={v.score} />
+                      </p>
+                      <p className="text-[10px] font-semibold text-ink-faint uppercase">AI Score</p>
                     </div>
                     <div className="text-center">
-                      <p className="text-lg font-bold text-ink">{v.ctr}%</p>
-                      <p className="text-[10px] text-ink-faint">CTR</p>
+                      <p className="text-xl font-black text-ink">
+                        <AnimatedCounter value={v.ctr} suffix="%" />
+                      </p>
+                      <p className="text-[10px] font-semibold text-ink-faint uppercase">CTR</p>
                     </div>
                     <div className="text-center">
-                      <p className="text-lg font-bold text-ink">₹{v.cpc}</p>
-                      <p className="text-[10px] text-ink-faint">CPC</p>
+                      <p className="text-xl font-black text-ink">
+                        <AnimatedCounter value={v.cpc} prefix="₹" />
+                      </p>
+                      <p className="text-[10px] font-semibold text-ink-faint uppercase">CPC</p>
                     </div>
                     <div className="text-center">
-                      <p className="text-lg font-bold text-ink">{v.audienceMatch}%</p>
-                      <p className="text-[10px] text-ink-faint">Audience</p>
+                      <p className="text-xl font-black text-ink">
+                        <AnimatedCounter value={v.audienceMatch} suffix="%" />
+                      </p>
+                      <p className="text-[10px] font-semibold text-ink-faint uppercase">Audience</p>
                     </div>
                   </div>
                 </Card>
@@ -219,10 +318,10 @@ export default function OptimizerPage() {
 
           {/* Metric comparison cards */}
           <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StaggerItem><MetricCard label="CTR Prediction"    valA={4.7}  valB={3.9}  unit="%" /></StaggerItem>
-            <StaggerItem><MetricCard label="Conv. Rate"         valA={2.3}  valB={2.8}  unit="%" /></StaggerItem>
-            <StaggerItem><MetricCard label="Cost Per Click"     valA={18}   valB={14}   unit="" higherIsBetter={false} format={(v) => `₹${v}`} /></StaggerItem>
-            <StaggerItem><MetricCard label="Audience Match"     valA={88}   valB={74}   unit="%" /></StaggerItem>
+            <StaggerItem><MetricCard label="CTR Prediction"    valA={variants[0].ctr}  valB={variants[1].ctr}  unit="%" /></StaggerItem>
+            <StaggerItem><MetricCard label="Conv. Rate"         valA={variants[0].convRate}  valB={variants[1].convRate}  unit="%" /></StaggerItem>
+            <StaggerItem><MetricCard label="Cost Per Click"     valA={variants[0].cpc}   valB={variants[1].cpc}   unit="" higherIsBetter={false} format={(v) => `₹${v}`} /></StaggerItem>
+            <StaggerItem><MetricCard label="Audience Match"     valA={variants[0].audienceMatch}   valB={variants[1].audienceMatch}   unit="%" /></StaggerItem>
           </StaggerContainer>
 
           {/* Charts row */}
@@ -235,7 +334,7 @@ export default function OptimizerPage() {
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={200}>
-                  <BarChart data={BAR_DATA} barSize={20} barGap={4}>
+                  <BarChart data={barData} barSize={20} barGap={4}>
                     <CartesianGrid strokeDasharray="3 3" stroke={C.border} vertical={false} />
                     <XAxis dataKey="metric" tick={{ fontSize: 11, fill: C.faint }} axisLine={false} tickLine={false} />
                     <YAxis tick={{ fontSize: 11, fill: C.faint }} axisLine={false} tickLine={false} />
@@ -263,7 +362,7 @@ export default function OptimizerPage() {
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={200}>
-                  <RadarChart data={RADAR_DATA}>
+                  <RadarChart data={radarData}>
                     <PolarGrid stroke={C.border} />
                     <PolarAngleAxis dataKey="metric" tick={{ fontSize: 10, fill: C.faint }} />
                     <PolarRadiusAxis domain={[0, 100]} tick={{ fontSize: 9, fill: C.faint }} axisLine={false} />
@@ -286,7 +385,7 @@ export default function OptimizerPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {Object.entries(BUDGET_SPLIT).map(([variant, pct]) => (
+                {Object.entries(budgetSplit).map(([variant, pct]) => (
                   <div key={variant} className="flex items-center gap-4">
                     <span className="text-sm font-semibold text-ink w-20 shrink-0">Variant {variant}</span>
                     <div className="flex-1 h-6 rounded-full bg-surface-subtle overflow-hidden">
