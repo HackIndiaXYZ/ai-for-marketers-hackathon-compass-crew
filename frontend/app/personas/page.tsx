@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { StaggerContainer, StaggerItem } from "@/components/ui/motion";
-import { PersonaCard, type PersonaCardProps } from "@/components/personas/PersonaCard";
+import { PersonaCard, type PersonaCardProps, type PurchasingPower } from "@/components/personas/PersonaCard";
 
 const PERSONAS: (PersonaCardProps & { id: string })[] = [
   {
@@ -94,10 +94,11 @@ export default function PersonasPage() {
         
         if (aiPersonas.length > 0) {
           const formatted = aiPersonas.map((p: any, index: number) => {
-            let power: "low" | "medium" | "high" | "premium" = "medium";
+            let power: PurchasingPower = "medium";
             const inc = (p.income_level || p.customer_value || "").toLowerCase();
-            if (inc.includes("high") || inc.includes("premium")) power = "high";
-            if (inc.includes("low") || inc.includes("budget")) power = "low";
+            if (inc.includes("premium")) power = "premium";
+            else if (inc.includes("high")) power = "high";
+            else if (inc.includes("low") || inc.includes("budget")) power = "low";
 
             return {
               id: `ai-persona-${index}`,
