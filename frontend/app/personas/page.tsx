@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Users, Sparkles, RefreshCw, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { Sidebar } from "@/components/sidebar/Sidebar";
@@ -79,8 +79,6 @@ const PERSONAS: (PersonaCardProps & { id: string })[] = [
     color: "high",
   },
 ];
-
-import { useEffect } from "react";
 
 export default function PersonasPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);

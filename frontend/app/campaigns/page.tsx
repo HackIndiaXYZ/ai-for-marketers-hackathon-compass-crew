@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Sparkles,
   RefreshCw,
@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { StaggerContainer, StaggerItem } from "@/components/ui/motion";
 import { AdCard, type AdType } from "@/components/ads/AdCard";
+import { AiLoadingState } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
 /* ── Config ────────────────────────────────────────────────── */
@@ -84,9 +85,6 @@ const buildMockAds = (type: AdType, lang: Language, tone: Tone, persona: Persona
     },
   ];
 };
-
-import { useEffect } from "react";
-import { AiLoadingState } from "@/components/ui";
 
 const CAMPAIGN_STEPS = [
   "Reading customer pain",

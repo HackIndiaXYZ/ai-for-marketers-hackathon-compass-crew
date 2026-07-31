@@ -20,6 +20,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { AiLoadingState, EmptyState } from "@/components/ui";
 import { PainCard, type PainCardProps, type Intensity } from "@/components/paincards/PainCard";
+import { analyzeBusiness } from "@/lib/api";
+import { getMockReviewsForTopic } from "@/lib/mockReviews";
 import { cn } from "@/lib/utils";
 
 /* ── Platforms ─────────────────────────────────────────────── */
@@ -148,9 +150,6 @@ const MOCK_RESULTS: PainCardProps[] = [
 /* ── Filter types ──────────────────────────────────────────── */
 type FilterIntensity = "all" | Intensity;
 type SortOption = "impact" | "mentions" | "intensity";
-
-import { analyzeBusiness } from "@/lib/api";
-import { getMockReviewsForTopic } from "@/lib/mockReviews";
 
 /* ── Page ──────────────────────────────────────────────────── */
 export default function AnalyzePage() {

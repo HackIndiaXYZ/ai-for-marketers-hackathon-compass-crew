@@ -30,6 +30,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { StaggerContainer, StaggerItem, FadeInUp } from "@/components/ui/motion";
+import { AiLoadingState, AnimatedCounter } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
 /* ── Constants ─────────────────────────────────────────────── */
@@ -90,8 +91,6 @@ function Slider({ label, value, min, max, step = 1, onChange, format }: {
     </div>
   );
 }
-
-import { AiLoadingState, AnimatedCounter } from "@/components/ui";
 
 const SIMULATION_STEPS = [
   "Configuring audience parameters",

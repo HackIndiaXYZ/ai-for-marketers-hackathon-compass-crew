@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   TrendingUp,
   Sparkles,
@@ -115,8 +115,6 @@ function MetricCard({
     </div>
   );
 }
-
-import { useEffect } from "react";
 
 /* ── Page ──────────────────────────────────────────────────── */
 export default function OptimizerPage() {
